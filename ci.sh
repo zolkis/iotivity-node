@@ -43,7 +43,7 @@ mkdir -p ./depbuild || exit 1
 
 # Download and build iotivity from tarball
 cd ./depbuild || exit 1
-	wget -O iotivity.tar.gz 'https://gerrit.iotivity.org/gerrit/gitweb?p=iotivity.git;a=snapshot;h=0.9.1;sf=tgz' || exit 1
+	wget -O iotivity.tar.gz 'https://gerrit.iotivity.org/gerrit/gitweb?p=iotivity.git;a=snapshot;h=700124f965b755b4b05f79a4c09f0678cc79f56d;sf=tgz' || exit 1
 	tar xvzf iotivity.tar.gz || exit 1
 
 	# There should only be one directory inside this directory, so using the wildcard evaluates
