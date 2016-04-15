@@ -3,8 +3,7 @@ IoT Web API
 
 Abstract
 --------
-This document presents a JavaScript API based on the [OIC](http://www.openinterconnect.org/)
-[Core Specification](http://openinterconnect.org/developer-resources/specs/), and the C and [C++](https://api-docs.iotivity.org/latest/index.html) API of the [IoTivity](https://www.iotivity.org/) project.
+This document presents a JavaScript API for [OIC](http://www.openinterconnect.org/) [Core Specification](http://openinterconnect.org/developer-resources/specs/).
 
 Introduction
 ------------
@@ -39,7 +38,7 @@ Therefore the **API entry point** is an object that exposes the local device fun
 When a device is constructed, the implementation should announce its presence.
 Adding an event listener to the 'devicefound' event should turn on presence observing, i.e. the API implementation should make a request to watch presence notifications, and fire a 'devicefound' event when a presence notification is received.
 
-**Resource identification** is URL path, relative to a given device.
+**Resource identification** is URL path, relative to a given device. A URL composed of the ```oic``` scheme, the device ID as host and the resource path can also be used for identifying a resource: ```oic://<deviceID>/<resourcePath>```. However, this specification uses the device ID and resource ID separately.
 
 On each device there are special resources, implementing device discovery, resource discovery, platform discovery, etc. Platform needs to be discoverable on a resource with a fixed URI ```/oic/p```, device on ```/oic/d``` and resources on ```/oic/res```. This API encapsulates these special resources and the hardcoded/fixed URIs by explicit function names and parameters.
 
@@ -66,7 +65,7 @@ The API entry point is the local OIC stack executed on an OIC device. Multiple d
 
 When the constructor is invoked without parameters, the device is started in the default (server) role.
 ```javascript
-var oic = require('oic');
+var oic = require('oic')();
 ```
 If the OIC functionality is forced in client-only mode,  the ```OicServer``` API is not available on it (all server methods fail with ```NotSupportedError```).
 ```javascript
@@ -97,6 +96,7 @@ The following information is exposed on the local ```/oic/d``` (device) resource
 [NoInterfaceObject]
 interface OicDevice {
   readonly attribute USVString uuid;
+  readonly attribute USVString url;  // host:port
   readonly attribute DOMString name;
   readonly attribute sequence<DOMString> dataModels;
     // list of <vertical>.major.minor, e.g. vertical = “Smart Home”
@@ -270,8 +270,8 @@ The client API for accessing OIC Presence functionality.
 ```javascript
 [NoInterfaceObject]
 interface OicPresence: EventTarget {
-  Promise<void> subscribe(optional USVString deviceId);
-  Promise<void> unsubscribe(optional USVString deviceId);
+  Promise<void> subscribe(optional USVString url);
+  Promise<void> unsubscribe(optional USVString url);
   attribute EventHandler<OicDeviceChangeEvent> ondevicechange;
 };
 
@@ -367,7 +367,7 @@ Code Examples
 ### Getting device configuration
 
 ```javascript
-var oic = require('oic');
+var oic = require('oic')();
 if (oic.device.uuid) {  // configuration is valid
   startServer();
   startClient();
@@ -376,14 +376,14 @@ if (oic.device.uuid) {  // configuration is valid
 }
 ```
 
-### OIC Client contolling a remote red LED.
+### OIC Client controlling a remote red LED.
 ```javascript
 // Discover a remote red light, start observing it, and make sure it's not too bright.
 var red = null;
 function startClient() {
   // discover resources
   oic.onresourcefound = function(event) {
-    if(event.resource && event.resource.id.path == "/light/ambience/red") {
+    if(event.resource && event.resource.id.path === "/light/ambience/red") {
       red = event.resource;
       red.addEventListener('update', redHandler);
     }
@@ -436,7 +436,7 @@ function startServer() {
 };
 
 function onLightRetrieve(event) {
-  if (event.target.id.path == lightResource.id.path) {
+  if (event.target.id.path === lightResource.id.path) {
     event.sendResponse(lightResource)
     .catch( (err) => {
         console.log("Error sending retrieve response.");
@@ -463,7 +463,7 @@ function onLightUpdate(event) {
 
 function onLightObserve(event) {
   console.log("Resource " + event.target + " observed by " + event.source + ".");
-  if (event.target.id.path == lightResource.id.path) {
+  if (event.target.id.path === lightResource.id.path) {
     event.sendResponse(lightResource)
     .catch( (err) => {
         console.log("Error sending observe response.");
